@@ -73,6 +73,11 @@ export const generateRelationshipCertificate = async (req, res) => {
         }
       });
 
+      // Certificate Number and Issued Date (top right and left)
+      doc.font('Helvetica').fontSize(10).fillColor('#718096');
+      doc.text(`Certificate No: ${newCertificate._id}`, marginX, 60, { align: 'left' });
+      doc.text(`Issued On: ${new Date(newCertificate.createdAt).toLocaleDateString()}`, docWidth - marginX, 60, { align: 'right' });
+
       // Update the relationship with the new certificate ID
       relationship.latestCertificate = newCertificate._id;
       await relationship.save();
@@ -91,12 +96,6 @@ export const generateRelationshipCertificate = async (req, res) => {
 
     // Background/Border
     doc.rect(20, 20, docWidth - 40, docHeight - 40).stroke('#4A5568');
-
-    // Certificate Number and Issued Date (top right and left)
-    doc.font('Helvetica').fontSize(10).fillColor('#718096');
-    doc.text(`Certificate No: ${newCertificate._id}`, marginX, currentY, { align: 'left' });
-    doc.text(`Issued On: ${new Date().toLocaleDateString()}`, docWidth - marginX, currentY, { align: 'right' });
-    currentY += 30;
 
     // Title
     doc.font('Helvetica-Bold').fontSize(36).fillColor('#4A5568')

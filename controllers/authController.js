@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import User from '../models/User.js';
+import { nanoid } from 'nanoid'; // Import nanoid
 
 const generateToken = (userId) => {
   return jwt.sign(
@@ -66,7 +67,8 @@ export const signup = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         fullName: user.fullName,
-        avatar: user.avatar
+        avatar: user.avatar,
+        registrationId: user.registrationId // Add registrationId
       }
     });
   } catch (error) {
@@ -108,6 +110,18 @@ export const login = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
+    // If registrationId is missing, generate and save it
+    if (!user.registrationId) {
+      let uniqueId = nanoid(10);
+      let userWithId = await User.findOne({ registrationId: uniqueId });
+      while (userWithId) {
+        uniqueId = nanoid(10);
+        userWithId = await User.findOne({ registrationId: uniqueId });
+      }
+      user.registrationId = uniqueId;
+      await user.save(); // Save again to persist new registrationId
+    }
+
     // Generate token
     const token = generateToken(user._id);
 
@@ -122,7 +136,8 @@ export const login = async (req, res) => {
         lastName: user.lastName,
         fullName: user.fullName,
         avatar: user.avatar,
-        preferences: user.preferences
+        preferences: user.preferences,
+        registrationId: user.registrationId // Add registrationId
       }
     });
   } catch (error) {
@@ -139,6 +154,18 @@ export const getMe = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // If registrationId is missing, generate and save it
+    if (!user.registrationId) {
+      let uniqueId = nanoid(10);
+      let userWithId = await User.findOne({ registrationId: uniqueId });
+      while (userWithId) {
+        uniqueId = nanoid(10);
+        userWithId = await User.findOne({ registrationId: uniqueId });
+      }
+      user.registrationId = uniqueId;
+      await user.save(); // Save again to persist new registrationId
+    }
+
     res.json({
       user: {
         id: user._id,
@@ -152,7 +179,8 @@ export const getMe = async (req, res) => {
         dateOfBirth: user.dateOfBirth,
         preferences: user.preferences,
         lastLogin: user.lastLogin,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        registrationId: user.registrationId // Add registrationId
       }
     });
   } catch (error) {
@@ -203,7 +231,8 @@ export const updateProfile = async (req, res) => {
         avatar: user.avatar,
         bio: user.bio,
         dateOfBirth: user.dateOfBirth,
-        preferences: user.preferences
+        preferences: user.preferences,
+        registrationId: user.registrationId // Add registrationId
       }
     });
   } catch (error) {
@@ -233,13 +262,13 @@ export const searchUsers = async (req, res) => {
           { email: { $regex: q, $options: 'i' } }
         ],
         ...(req.user ? { _id: { $ne: req.user.id } } : {}) // Exclude the current user if authenticated
-      }).select('firstName lastName username email avatar'); // Select relevant fields
+      }).select('firstName lastName username email avatar registrationId'); // Select relevant fields
     } else if (registrationId) {
       // Search by registration ID (assuming it's a unique identifier like _id or a custom regId field)
       const userFound = await User.findOne({
         _id: registrationId, // Assuming registrationId is the user's _id
         ...(req.user ? { _id: { $ne: req.user.id } } : {}) // Exclude current user if authenticated
-      }).select('firstName lastName username email avatar');
+      }).select('firstName lastName username email avatar registrationId');
 
       if (userFound) {
         users = [userFound];
@@ -257,7 +286,8 @@ export const searchUsers = async (req, res) => {
         fullName: user.fullName,
         username: user.username,
         email: user.email,
-        avatar: user.avatar
+        avatar: user.avatar,
+        registrationId: user.registrationId // Add registrationId
       }))
     });
   } catch (error) {

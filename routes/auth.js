@@ -57,7 +57,7 @@ const updateProfileValidation = [
     .withMessage('Bio cannot exceed 500 characters'),
   body('dateOfBirth')
     .optional()
-    .isISO8601()
+    .isDate()
     .withMessage('Please provide a valid date')
 ];
 
